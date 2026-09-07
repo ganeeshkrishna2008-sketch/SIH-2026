@@ -58,10 +58,10 @@ export default function Sidebar({ currentTab, setCurrentTab, alertCount = 0 }) {
         <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 text-xs text-slate-400 space-y-1.5">
           <div className="flex justify-between items-center text-slate-300 font-medium">
             <span>Prototype Phase</span>
-            <span className="text-sky-400 font-mono">Phase 0/1</span>
+            <span className="text-sky-400 font-mono">Phase 3</span>
           </div>
           <p className="text-[11px] text-slate-500 leading-relaxed">
-            Focus: ANPR Synthetic Trajectory + Macro Urban Analytics
+            Multi-Camera Vehicle Association + ANPR Trajectory
           </p>
         </div>
       </div>

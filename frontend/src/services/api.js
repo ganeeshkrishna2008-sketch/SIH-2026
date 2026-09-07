@@ -53,3 +53,38 @@ export const reviewAlert = async (alertId, status, reviewedBy, notes) => {
   if (!res.ok) throw new Error('Failed to update alert');
   return res.json();
 };
+
+// ─── Phase 3: Multi-Camera Vehicle Association ─────────────────────────────
+
+export const fetchVehicleTracks = async (multiCameraOnly = false) => {
+  const params = new URLSearchParams();
+  if (multiCameraOnly) params.append('multi_camera_only', 'true');
+  const res = await fetch(`${API_BASE}/associations/tracks?${params.toString()}`);
+  if (!res.ok) throw new Error('Failed to fetch vehicle tracks');
+  return res.json();
+};
+
+export const fetchVehicleTrack = async (plateNumber) => {
+  const res = await fetch(`${API_BASE}/associations/tracks/${encodeURIComponent(plateNumber)}`);
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    throw new Error('Failed to fetch vehicle track');
+  }
+  return res.json();
+};
+
+export const searchVehicleTracks = async (query) => {
+  const res = await fetch(`${API_BASE}/associations/search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) {
+    if (res.status === 404) return [];
+    throw new Error('Failed to search vehicle tracks');
+  }
+  return res.json();
+};
+
+export const fetchAssociationStats = async () => {
+  const res = await fetch(`${API_BASE}/associations/stats`);
+  if (!res.ok) throw new Error('Failed to fetch association stats');
+  return res.json();
+};
+

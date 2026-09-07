@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Car, Calendar, Navigation, ShieldAlert, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Search, Car, Calendar, Navigation, ShieldAlert, CheckCircle2, ArrowRight, Link2, Clock, MapPin, Zap } from 'lucide-react';
 import DemoDataBadge from '../components/DemoDataBadge';
-import { fetchUniquePlates, fetchTrajectory } from '../services/api';
+import { fetchUniquePlates, fetchTrajectory, searchVehicleTracks } from '../services/api';
 
 export default function VehicleSearchView({ initialPlate = '', onNavigateToTrajectory }) {
   const [plates, setPlates] = useState([]);
   const [searchPlate, setSearchPlate] = useState(initialPlate || 'TS09AB1234');
   const [trajectoryData, setTrajectoryData] = useState(null);
+  const [trackData, setTrackData] = useState(null); // Phase 3: association track
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -30,18 +31,39 @@ export default function VehicleSearchView({ initialPlate = '', onNavigateToTraje
     setSearchPlate(target);
     setLoading(true);
     setError(null);
+    setTrackData(null);
 
     try {
+      // Phase 3: Try association search first
+      const tracks = await searchVehicleTracks(target);
+      if (tracks && tracks.length > 0) {
+        setTrackData(tracks[0]); // Show the first matching track
+      }
+
+      // Also load the existing trajectory for backwards compatibility
       const data = await fetchTrajectory(target);
       if (data) {
         setTrajectoryData(data);
       } else {
         setTrajectoryData(null);
-        setError(`No detection history found for license plate: ${target}`);
+        if (!tracks || tracks.length === 0) {
+          setError(`No detection history found for license plate: ${target}`);
+        }
       }
     } catch (err) {
-      setError(`Failed to retrieve vehicle data: ${err.message}`);
-      setTrajectoryData(null);
+      // If association search 404s, fall back to trajectory
+      try {
+        const data = await fetchTrajectory(target);
+        if (data) {
+          setTrajectoryData(data);
+        } else {
+          setTrajectoryData(null);
+          setError(`No detection history found for license plate: ${target}`);
+        }
+      } catch (err2) {
+        setError(`Failed to retrieve vehicle data: ${err2.message}`);
+        setTrajectoryData(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -51,6 +73,10 @@ export default function VehicleSearchView({ initialPlate = '', onNavigateToTraje
     handleSearch(initialPlate || 'TS09AB1234');
   }, [initialPlate]);
 
+  // Use track data if available, otherwise fall back to trajectory data
+  const displayData = trackData || trajectoryData;
+  const isTrackView = !!trackData;
+
   return (
     <div className="space-y-6">
       {/* Search Header Bar */}
@@ -58,11 +84,11 @@ export default function VehicleSearchView({ initialPlate = '', onNavigateToTraje
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-slate-100">Vehicle Search & Observation History</h2>
+              <h2 className="text-xl font-bold text-slate-100">Vehicle Search & Cross-Camera Association</h2>
               <DemoDataBadge />
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Query plate records to reconstruct chronological camera observations and transit timeline.
+              Search by plate number to view multi-camera observations and cross-camera vehicle association.
             </p>
           </div>
         </div>
@@ -117,8 +143,146 @@ export default function VehicleSearchView({ initialPlate = '', onNavigateToTraje
         </div>
       )}
 
-      {/* Results View */}
-      {trajectoryData && (
+      {/* Phase 3: Association Track View */}
+      {isTrackView && trackData && (
+        <div className="space-y-6">
+          {/* Track Metadata Summary */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-sky-500/10 border border-sky-500/30 rounded-xl text-sky-400">
+                  <Car className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-mono font-bold text-white tracking-wide">
+                      {trackData.normalized_plate}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                      {trackData.vehicle_type}
+                    </span>
+                    {trackData.is_multi_camera && (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                        <Link2 className="w-3 h-3" />
+                        Multi-Camera
+                      </span>
+                    )}
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/30">
+                      {trackData.track_id}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 flex flex-wrap gap-4">
+                    <span>Total Observations: <strong className="text-slate-200">{trackData.total_observations}</strong></span>
+                    <span>Cameras: <strong className="text-slate-200">{trackData.total_cameras}</strong></span>
+                    <span>First Seen: <strong className="text-slate-200 font-mono">{trackData.first_seen ? new Date(trackData.first_seen).toLocaleTimeString() : 'N/A'}</strong></span>
+                    <span>Last Seen: <strong className="text-slate-200 font-mono">{trackData.last_seen ? new Date(trackData.last_seen).toLocaleTimeString() : 'N/A'}</strong></span>
+                    <span>Duration: <strong className="text-amber-400 font-mono">{trackData.duration_minutes} mins</strong></span>
+                  </div>
+                  {trackData.raw_plates && trackData.raw_plates.length > 1 && (
+                    <div className="text-xs text-slate-500 mt-1">
+                      OCR Variants Merged: {trackData.raw_plates.join(', ')}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button
+                onClick={() => onNavigateToTrajectory(trackData.normalized_plate)}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500 hover:text-slate-900 font-semibold text-xs transition shrink-0"
+              >
+                <Navigation className="w-4 h-4" />
+                <span>Open Trajectory Map</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Association Method Badge */}
+          <div className="flex items-center gap-2 px-4">
+            <Zap className="w-4 h-4 text-violet-400" />
+            <span className="text-xs text-slate-400">
+              Association Method: <span className="text-violet-400 font-mono">{trackData.association_method}</span>
+            </span>
+          </div>
+
+          {/* Cross-Camera Observation Timeline */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+                Cross-Camera Observation Timeline
+              </h3>
+              <span className="text-xs text-slate-400 font-mono">
+                {trackData.observations.length} Sightings across {trackData.total_cameras} Camera(s)
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider">
+                  <tr>
+                    <th className="py-2.5 px-3">Seq #</th>
+                    <th className="py-2.5 px-3">Camera Node</th>
+                    <th className="py-2.5 px-3">Location Name</th>
+                    <th className="py-2.5 px-3">Direction</th>
+                    <th className="py-2.5 px-3">Timestamp</th>
+                    <th className="py-2.5 px-3">Transit Time</th>
+                    <th className="py-2.5 px-3">Confidence</th>
+                    <th className="py-2.5 px-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 font-sans">
+                  {trackData.observations.map((obs) => (
+                    <tr key={obs.step_number} className="hover:bg-slate-800/40 transition">
+                      <td className="py-3 px-3 font-mono font-bold">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs">
+                          {obs.step_number}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 font-mono text-sky-400 font-bold">
+                        {obs.camera_id} ({obs.camera_name})
+                      </td>
+                      <td className="py-3 px-3 text-slate-200">{obs.location_name}</td>
+                      <td className="py-3 px-3 text-slate-400">{obs.direction}</td>
+                      <td className="py-3 px-3 font-mono text-slate-300">
+                        {new Date(obs.timestamp).toLocaleTimeString()}
+                      </td>
+                      <td className="py-3 px-3 font-mono">
+                        {obs.transit_time_formatted ? (
+                          <span className="text-amber-400 font-medium">
+                            +{obs.transit_time_formatted}
+                            {obs.distance_from_prev_km != null && ` (${obs.distance_from_prev_km} km)`}
+                          </span>
+                        ) : (
+                          <span className="text-slate-500 font-sans italic">Origin point</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 font-mono">
+                        <span className="text-emerald-400 font-semibold">
+                          {(obs.confidence * 100).toFixed(1)}%
+                        </span>
+                      </td>
+                      <td className="py-3 px-3">
+                        {obs.plausibility === 'plausible' || obs.plausibility === 'origin' || obs.plausibility === 'same_camera_reobservation' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                            <CheckCircle2 className="w-3 h-3" /> OK
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-500/10 text-amber-400 border border-amber-500/30" title={obs.plausibility}>
+                            ⚠ {obs.plausibility.split('(')[0].trim()}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback: Original trajectory view if no track data */}
+      {!isTrackView && trajectoryData && (
         <div className="space-y-6">
           {/* Vehicle Metadata Summary */}
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">

@@ -12,6 +12,7 @@ from app.routers import (
     analytics_router,
     alerts_router,
     anpr_router,
+    associations_router,
 )
 
 # Initialize database schema tables
@@ -44,13 +45,14 @@ app.include_router(trajectories_router, prefix=API_V1_PREFIX)
 app.include_router(analytics_router, prefix=API_V1_PREFIX)
 app.include_router(alerts_router, prefix=API_V1_PREFIX)
 app.include_router(anpr_router, prefix=API_V1_PREFIX)
+app.include_router(associations_router, prefix=API_V1_PREFIX)
 
 @app.get("/")
 def root():
     return {
         "status": "online",
         "project": PROJECT_NAME,
-        "phase": "Phase 2 — ANPR/OCR Active",
+        "phase": "Phase 3 — Multi-Camera Vehicle Association",
         "docs_url": "/docs"
     }
 
