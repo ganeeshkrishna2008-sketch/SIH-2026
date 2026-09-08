@@ -88,3 +88,14 @@ export const fetchAssociationStats = async () => {
   return res.json();
 };
 
+export const fetchCameraVehicles = async (cameraId, limit = 100) => {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', limit);
+  const res = await fetch(`${API_BASE}/cameras/${encodeURIComponent(cameraId)}/vehicles?${params.toString()}`);
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    throw new Error(`Failed to fetch vehicles for camera ${cameraId}`);
+  }
+  return res.json();
+};
+

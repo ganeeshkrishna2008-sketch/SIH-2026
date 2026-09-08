@@ -4,12 +4,12 @@ backend/test_phase3.py
 Phase 3 — Multi-Camera Vehicle Association Tests
 
 Tests:
-  1. Same plate at multiple cameras with plausible timestamps → same track
-  2. Different plates at different cameras → separate tracks
-  3. OCR formatting differences → correct normalization and association
-  4. Implausible temporal/spatial transition → flagged appropriately
-  5. Phase 2 ANPR workflow → still works (health check)
-  6. Vehicle search → chronological cross-camera observations
+  1. Same plate at multiple cameras with plausible timestamps -> same track
+  2. Different plates at different cameras -> separate tracks
+  3. OCR formatting differences -> correct normalization and association
+  4. Implausible temporal/spatial transition -> flagged appropriately
+  5. Phase 2 ANPR workflow -> still works (health check)
+  6. Vehicle search -> chronological cross-camera observations
 
 Run with:
     python backend/test_phase3.py
@@ -59,10 +59,10 @@ def test_seed_data():
         raise
 
 
-# ─── Test 1: Same plate at multiple cameras → same track ─────────────────────
+# ─── Test 1: Same plate at multiple cameras -> same track ─────────────────────
 
 def test_same_plate_multi_camera():
-    section("TEST 1: Same Plate at Multiple Cameras → Same Track")
+    section("TEST 1: Same Plate at Multiple Cameras -> Same Track")
 
     r = client.get("/api/associations/tracks/TS09AB1234")
     check(r.status_code == 200, f"API returned 200", f"API returned {r.status_code}: {r.text}")
@@ -98,15 +98,15 @@ def test_same_plate_multi_camera():
 
         print(f"\n  Track ID: {track['track_id']}")
         print(f"  Plate: {track['normalized_plate']}")
-        print(f"  Camera sequence: {' → '.join(cam_sequence)}")
+        print(f"  Camera sequence: {' -> '.join(cam_sequence)}")
         for o in obs:
             print(f"    {o['camera_id']} — {o['timestamp'][:19]} — conf: {o['confidence']}")
 
 
-# ─── Test 2: Different plates → separate tracks ──────────────────────────────
+# ─── Test 2: Different plates -> separate tracks ──────────────────────────────
 
 def test_different_plates_separate():
-    section("TEST 2: Different Plates → Separate Tracks")
+    section("TEST 2: Different Plates -> Separate Tracks")
 
     r1 = client.get("/api/associations/tracks/TS09AB1234")
     r2 = client.get("/api/associations/tracks/DL01CZ4567")
@@ -122,7 +122,7 @@ def test_different_plates_separate():
         plate2 = tracks2[0]["normalized_plate"] if tracks2 else ""
 
         check(plate1 != plate2,
-              f"Plates are distinct: {plate1} ≠ {plate2}",
+              f"Plates are distinct: {plate1} != {plate2}",
               f"Plates incorrectly merged: {plate1} == {plate2}")
 
         # Ensure observations don't overlap
@@ -178,7 +178,7 @@ def test_implausible_transition():
     from datetime import datetime, timedelta
 
     # Simulate CAM-01 (17.385, 78.4867) to CAM-07 (17.45, 78.38) in 20 seconds
-    # Distance is ~12 km, which at 20 seconds = ~2160 km/h → clearly implausible
+    # Distance is ~12 km, which at 20 seconds = ~2160 km/h -> clearly implausible
     t1 = datetime(2026, 9, 7, 9, 15, 0)
     t2 = datetime(2026, 9, 7, 9, 15, 20)
 
@@ -325,21 +325,21 @@ def print_summary():
     print(f"\n  Results: {PASS}/{total} passed, {FAIL}/{total} failed")
     print()
     if FAIL == 0:
-        print("  ✅ ALL TESTS PASSED")
+        print("  [PASS] ALL TESTS PASSED")
         print()
         print("  Phase 3 — Multi-Camera Vehicle Association is COMPLETE.")
         print("  The following capabilities are verified:")
-        print("    ✓ Multi-camera observations are correctly associated")
-        print("    ✓ Same vehicle is represented across multiple cameras")
-        print("    ✓ Different vehicles remain separated")
-        print("    ✓ Timestamp information is preserved and ordered")
-        print("    ✓ Camera information is preserved")
-        print("    ✓ Vehicle search works (full + partial plate)")
-        print("    ✓ OCR normalization correctly merges formatting variants")
-        print("    ✓ Implausible transitions are flagged")
-        print("    ✓ Existing Phase 0–2 functionality still works")
+        print("    [OK] Multi-camera observations are correctly associated")
+        print("    [OK] Same vehicle is represented across multiple cameras")
+        print("    [OK] Different vehicles remain separated")
+        print("    [OK] Timestamp information is preserved and ordered")
+        print("    [OK] Camera information is preserved")
+        print("    [OK] Vehicle search works (full + partial plate)")
+        print("    [OK] OCR normalization correctly merges formatting variants")
+        print("    [OK] Implausible transitions are flagged")
+        print("    [OK] Existing Phase 0–2 functionality still works")
     else:
-        print(f"  ❌ {FAIL} TEST(S) FAILED — see details above")
+        print(f"  [FAIL] {FAIL} TEST(S) FAILED — see details above")
     print()
     print("  NOTE: This is a prototype demonstrating the multi-camera")
     print("  association concept using synthetic/authorized data.")

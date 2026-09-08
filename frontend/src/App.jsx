@@ -7,6 +7,7 @@ import TrajectoryView from './views/TrajectoryView';
 import AnalyticsView from './views/AnalyticsView';
 import AlertsView from './views/AlertsView';
 import ANPRView from './views/ANPRView';
+import CameraActivityView from './views/CameraActivityView';
 import { fetchAlerts } from './services/api';
 
 export default function App() {
@@ -37,6 +38,11 @@ export default function App() {
     setCurrentTab('trajectory');
   };
 
+  const handleNavigateToSearch = (plate) => {
+    setSelectedPlate(plate);
+    setCurrentTab('search');
+  };
+
   return (
     <div className="flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
       <Navbar />
@@ -60,6 +66,11 @@ export default function App() {
               <VehicleSearchView
                 initialPlate={selectedPlate}
                 onNavigateToTrajectory={handleSearchNavigateToTrajectory}
+              />
+            )}
+            {currentTab === 'camera-activity' && (
+              <CameraActivityView
+                onNavigateToVehicleHistory={handleNavigateToSearch}
               />
             )}
             {currentTab === 'trajectory' && (

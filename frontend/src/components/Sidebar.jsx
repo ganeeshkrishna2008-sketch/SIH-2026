@@ -1,11 +1,12 @@
 import React from 'react';
-import { LayoutDashboard, Search, Navigation, BarChart3, AlertTriangle, ScanLine } from 'lucide-react';
+import { LayoutDashboard, Search, Navigation, BarChart3, AlertTriangle, ScanLine, Camera } from 'lucide-react';
 
 export default function Sidebar({ currentTab, setCurrentTab, alertCount = 0 }) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
     { id: 'anpr', label: 'ANPR / OCR Engine', icon: ScanLine, badge: 'Phase 2' },
     { id: 'search', label: 'Vehicle Search & History', icon: Search },
+    { id: 'camera-activity', label: 'Camera Activity', icon: Camera },
     { id: 'trajectory', label: 'Trajectory & Route Map', icon: Navigation },
     { id: 'analytics', label: 'Traffic Flow Analytics', icon: BarChart3 },
     { id: 'alerts', label: 'Authorized Alerts', icon: AlertTriangle, badge: alertCount },

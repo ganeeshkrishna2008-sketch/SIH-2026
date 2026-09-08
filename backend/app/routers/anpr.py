@@ -11,11 +11,13 @@ REST API endpoints for Phase 2 ANPR pipeline:
 import os
 import sys
 import json
+import shutil
+import tempfile
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, List
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -316,3 +318,67 @@ def get_anpr_results(limit: int = 50, db: Session = Depends(get_db)):
         .limit(limit)
         .all()
     )
+
+@router.post("/upload-video", response_model=ANPRResult)
+async def upload_video_endpoint(
+    video: UploadFile = File(...),
+    camera_id: str = Form("CAM-01"),
+    frame_sample_interval: int = Form(30),
+    min_confidence: float = Form(0.50),
+    db: Session = Depends(get_db)
+):
+    """Process an uploaded video file through the ANPR pipeline."""
+    try:
+        from ai_cv.video_processor import process_video
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=f"ANPR library missing: {e}")
+
+    # Validate file extension
+    allowed_extensions = [".mp4", ".avi", ".mov", ".mkv"]
+    ext = Path(video.filename).suffix.lower()
+    if ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail=f"Unsupported file format {ext}. Supported: {', '.join(allowed_extensions)}")
+
+    # Save to temp file
+    fd, temp_path = tempfile.mkstemp(suffix=ext)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            shutil.copyfileobj(video.file, f)
+
+        cam = db.query(Camera).filter(Camera.camera_id == camera_id).first()
+
+        result = process_video(
+            video_path=temp_path,
+            camera_id=camera_id,
+            location_name=cam.location_name if cam else "ANPR Zone",
+            latitude=cam.latitude if cam else 17.3850,
+            longitude=cam.longitude if cam else 78.4867,
+            direction=cam.direction if cam else "Northbound",
+            frame_sample_interval=frame_sample_interval,
+            min_confidence=min_confidence,
+        )
+
+        if result["status"] == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Error processing video"))
+
+        stored = _store_detections_in_db(db, result, camera_id)
+
+        # Remove absolute paths from response to not leak server paths
+        annotated = [Path(p).name for p in result.get("annotated_frames", [])]
+
+        return ANPRResult(
+            status="completed",
+            camera_id=camera_id,
+            total_frames_sampled=result.get("total_frames_sampled", 0),
+            detections_stored=stored,
+            rejected_low_confidence=result.get("rejected_low_confidence", 0),
+            detections=result.get("detections", []),
+            annotated_frames=annotated,
+            duration_seconds=result.get("duration_seconds", 0),
+        )
+    finally:
+        try:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        except Exception:
+            pass
