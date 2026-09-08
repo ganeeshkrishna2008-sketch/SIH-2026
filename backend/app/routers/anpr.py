@@ -86,7 +86,7 @@ def _store_detections_in_db(db: Session, anpr_result: dict, camera_id: str) -> i
         detection = Detection(
             camera_id=det_data.get("camera_id", camera_id),
             plate_number=det_data.get("plate_number", "UNKNOWN"),
-            vehicle_type=det_data.get("vehicle_type", "Unknown"),
+            vehicle_type=det_data.get("vehicle_type", "Other"),
             confidence=det_data.get("confidence", 0.0),
             location_name=cam.location_name if cam else det_data.get("location_name", "ANPR Zone"),
             direction=cam.direction if cam else det_data.get("direction", "Unknown"),

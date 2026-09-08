@@ -68,14 +68,14 @@ def seed_database():
 
         print("Seeding Vehicles...")
         vehicles_data = [
-            {"plate_number": "TS09AB1234", "vehicle_type": "Sedan", "color": "White", "is_watchlist": 0, "notes": "Standard commuter"},
-            {"plate_number": "DL01CZ4567", "vehicle_type": "SUV", "color": "Black", "is_watchlist": 0, "notes": "Commercial fleet"},
-            {"plate_number": "KA05MH8899", "vehicle_type": "Sedan", "color": "Silver", "is_watchlist": 1, "notes": "Authorized Watchlist Demo Subject"},
-            {"plate_number": "MH12TR3321", "vehicle_type": "Bus", "color": "Blue", "is_watchlist": 0, "notes": "Intercity Transit"},
-            {"plate_number": "HR26DQ5544", "vehicle_type": "Truck", "color": "Yellow", "is_watchlist": 0, "notes": "Logistics Freight"},
-            {"plate_number": "AP09BK7788", "vehicle_type": "Motorcycle", "color": "Red", "is_watchlist": 0, "notes": "Delivery courier"},
-            {"plate_number": "UP32EF9900", "vehicle_type": "SUV", "color": "Grey", "is_watchlist": 1, "notes": "Authorized Watchlist Demo Subject 2"},
-            {"plate_number": "TN02AA4321", "vehicle_type": "Auto", "color": "Green-Yellow", "is_watchlist": 0, "notes": "Urban Para-transit"},
+            {"plate_number": "TS09AB1234", "vehicle_type": "Car", "color": "White", "owner_name": "Ravi Kumar", "registration_date": "12-May-2018", "chassis_number": "MA3EKXXXXXXXXX123", "engine_number": "G12BXXXXXXX456", "is_watchlist": 0, "notes": "Standard commuter"},
+            {"plate_number": "DL01CZ4567", "vehicle_type": "Car", "color": "Black", "owner_name": "Priya Sharma", "registration_date": "04-Aug-2021", "chassis_number": "MA3EKXXXXXXXXX789", "engine_number": "G12BXXXXXXX012", "is_watchlist": 0, "notes": "Commercial fleet"},
+            {"plate_number": "KA05MH8899", "vehicle_type": "Car", "color": "Silver", "owner_name": "John Doe", "registration_date": "15-Jan-2020", "chassis_number": "MA3EKXXXXXXXXX456", "engine_number": "G12BXXXXXXX789", "is_watchlist": 1, "notes": "Authorized Watchlist Demo Subject"},
+            {"plate_number": "MH12TR3321", "vehicle_type": "Bus", "color": "Blue", "owner_name": "State Transit Corp", "registration_date": "22-Nov-2015", "chassis_number": "MB8TRXXXXXXXXX123", "engine_number": "H15CXXXXXXX456", "is_watchlist": 0, "notes": "Intercity Transit"},
+            {"plate_number": "HR26DQ5544", "vehicle_type": "Truck", "color": "Yellow", "owner_name": "Global Freight Ltd", "registration_date": "09-Sep-2019", "chassis_number": "MB8TRXXXXXXXXX789", "engine_number": "H15CXXXXXXX012", "is_watchlist": 0, "notes": "Logistics Freight"},
+            {"plate_number": "AP09BK7788", "vehicle_type": "Motorcycle", "color": "Red", "owner_name": "Kiran Rao", "registration_date": "30-Mar-2022", "chassis_number": "MD2MCXXXXXXXXX456", "engine_number": "J20DXXXXXXX789", "is_watchlist": 0, "notes": "Delivery courier"},
+            {"plate_number": "UP32EF9900", "vehicle_type": "Car", "color": "Grey", "owner_name": "Anita Desai", "registration_date": "18-Feb-2017", "chassis_number": "MA3EKXXXXXXXXX321", "engine_number": "G12BXXXXXXX654", "is_watchlist": 1, "notes": "Authorized Watchlist Demo Subject 2"},
+            {"plate_number": "TN02AA4321", "vehicle_type": "Other", "color": "Green-Yellow", "owner_name": "Suresh Babu", "registration_date": "05-Jul-2016", "chassis_number": "ME4OTXXXXXXXXX987", "engine_number": "K25EXXXXXXX321", "is_watchlist": 0, "notes": "Urban Para-transit"},
         ]
 
         for v in vehicles_data:
@@ -98,7 +98,7 @@ def seed_database():
             db.add(Detection(
                 camera_id=cam_id,
                 plate_number="TS09AB1234",
-                vehicle_type="Sedan",
+                vehicle_type="Car",
                 confidence=conf,
                 location_name=cam.location_name,
                 direction=cam.direction,
@@ -119,7 +119,7 @@ def seed_database():
             db.add(Detection(
                 camera_id=cam_id,
                 plate_number="DL01CZ4567",
-                vehicle_type="SUV",
+                vehicle_type="Car",
                 confidence=conf,
                 location_name=cam.location_name,
                 direction=cam.direction,
@@ -140,7 +140,7 @@ def seed_database():
             db.add(Detection(
                 camera_id=cam_id,
                 plate_number="KA05MH8899",
-                vehicle_type="Sedan",
+                vehicle_type="Car",
                 confidence=conf,
                 location_name=cam.location_name,
                 direction=cam.direction,
@@ -156,14 +156,14 @@ def seed_database():
             ("MH12TR3321", "Bus"),
             ("HR26DQ5544", "Truck"),
             ("AP09BK7788", "Motorcycle"),
-            ("UP32EF9900", "SUV"),
-            ("TN02AA4321", "Auto"),
+            ("UP32EF9900", "Car"),
+            ("TN02AA4321", "Other"),
         ]
         # generate additional random plates for traffic volume realism
         random.seed(42)
         generated_plates = [
             (f"TS{random.randint(1,15):02d}{chr(random.randint(65,90))}{chr(random.randint(65,90))}{random.randint(1000,9999)}",
-             random.choice(["Sedan", "SUV", "Motorcycle", "Auto", "Truck", "Bus"]))
+             random.choice(["Car", "Motorcycle", "Bus", "Truck", "Other"]))
             for _ in range(35)
         ]
         all_traffic_pool = bg_vehicles + generated_plates

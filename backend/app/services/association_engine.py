@@ -25,6 +25,7 @@ from sqlalchemy import func
 from app.models.detection import Detection
 from app.models.camera import Camera
 from app.models.vehicle import Vehicle
+from app.services.analytics_engine import map_vehicle_type
 
 
 # ─── Configurable Association Thresholds ───────────────────────────────────────
@@ -221,11 +222,11 @@ class AssociationEngine:
                 # Determine vehicle type
                 vehicle_record = vehicles.get(norm_plate)
                 if vehicle_record:
-                    vehicle_type = vehicle_record.vehicle_type
+                    vehicle_type = map_vehicle_type(vehicle_record.vehicle_type)
                 else:
                     # Use the most confident detection's vehicle_type
                     best_det = max(sub_dets, key=lambda d: d.confidence)
-                    vehicle_type = best_det.vehicle_type
+                    vehicle_type = map_vehicle_type(best_det.vehicle_type)
 
                 # Build observation list with transit metadata
                 observations = []
@@ -267,7 +268,7 @@ class AssociationEngine:
                         "direction": det.direction,
                         "timestamp": det.timestamp.isoformat(),
                         "confidence": round(det.confidence, 3),
-                        "vehicle_type": det.vehicle_type,
+                        "vehicle_type": map_vehicle_type(det.vehicle_type),
                         "transit_time_seconds": transit_time_sec,
                         "transit_time_formatted": transit_time_fmt,
                         "distance_from_prev_km": distance_km,

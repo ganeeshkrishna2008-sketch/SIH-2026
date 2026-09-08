@@ -3,6 +3,7 @@ import { Camera, Car, Activity, Zap, ArrowUpRight, Search, Clock } from 'lucide-
 import MetricCard from '../components/MetricCard';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { fetchCameras, fetchDetections, fetchAnalyticsSummary } from '../services/api';
+import { mapVehicleType } from '../utils/vehicleType';
 
 export default function DashboardView({ onSelectPlate }) {
   const [cameras, setCameras] = useState([]);
@@ -183,7 +184,7 @@ export default function DashboardView({ onSelectPlate }) {
                   <td className="py-2.5 px-3 text-slate-400">{det.direction}</td>
                   <td className="py-2.5 px-3">
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
-                      {det.vehicle_type}
+                      {mapVehicleType(det.vehicle_type)}
                     </span>
                   </td>
                   <td className="py-2.5 px-3 font-mono text-slate-400">

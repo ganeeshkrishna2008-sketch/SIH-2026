@@ -5,7 +5,7 @@ from typing import Optional
 class DetectionBase(BaseModel):
     camera_id: str
     plate_number: str
-    vehicle_type: str = "Sedan"
+    vehicle_type: str = "Car"
     confidence: float = 0.95
     location_name: str
     direction: str

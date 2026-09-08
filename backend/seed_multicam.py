@@ -112,11 +112,11 @@ def seed_multicam_database():
         # --- Vehicles -----------------------------------------------------
         print("Seeding vehicles...")
         vehicles_data = [
-            {"plate_number": "TS09AB1234", "vehicle_type": "Sedan", "color": "White",
+            {"plate_number": "TS09AB1234", "vehicle_type": "Car", "color": "White",
              "is_watchlist": 0, "notes": "Primary demo vehicle -- crosses 4 cameras"},
-            {"plate_number": "DL01CZ4567", "vehicle_type": "SUV", "color": "Black",
+            {"plate_number": "DL01CZ4567", "vehicle_type": "Car", "color": "Black",
              "is_watchlist": 0, "notes": "Secondary demo vehicle -- 2 cameras"},
-            {"plate_number": "KA05MH8899", "vehicle_type": "Sedan", "color": "Silver",
+            {"plate_number": "KA05MH8899", "vehicle_type": "Car", "color": "Silver",
              "is_watchlist": 1, "notes": "Authorized Watchlist Demo Subject"},
             {"plate_number": "MH12TR3321", "vehicle_type": "Bus", "color": "Blue",
              "is_watchlist": 0, "notes": "Intercity Transit -- 3 cameras"},
@@ -124,9 +124,9 @@ def seed_multicam_database():
              "is_watchlist": 0, "notes": "Logistics -- single camera"},
             {"plate_number": "AP09BK7788", "vehicle_type": "Motorcycle", "color": "Red",
              "is_watchlist": 0, "notes": "Delivery courier -- single camera"},
-            {"plate_number": "UP32EF9900", "vehicle_type": "SUV", "color": "Grey",
+            {"plate_number": "UP32EF9900", "vehicle_type": "Car", "color": "Grey",
              "is_watchlist": 1, "notes": "Authorized Watchlist Demo Subject 2"},
-            {"plate_number": "TN02AA4321", "vehicle_type": "Auto", "color": "Green-Yellow",
+            {"plate_number": "TN02AA4321", "vehicle_type": "Other", "color": "Green-Yellow",
              "is_watchlist": 0, "notes": "Urban Para-transit"},
         ]
 
@@ -140,7 +140,7 @@ def seed_multicam_database():
 
         base_time = datetime.utcnow().replace(hour=9, minute=0, second=0, microsecond=0)
 
-        def add_detection(plate, cam_id, ts, conf=0.96, v_type="Sedan"):
+        def add_detection(plate, cam_id, ts, conf=0.96, v_type="Car"):
             """Helper to add a detection with full camera metadata."""
             cam = cam_objs[cam_id]
             db.add(Detection(
@@ -169,8 +169,8 @@ def seed_multicam_database():
 
         # -- Vehicle B: DL01CZ4567 -- CAM-02 -> CAM-05 (plausible)
         print("  -> Vehicle B (DL01CZ4567): CAM-02 -> CAM-05")
-        add_detection("DL01CZ4567", "CAM-02", base_time + timedelta(minutes=5, seconds=0), 0.94, "SUV")
-        add_detection("DL01CZ4567", "CAM-05", base_time + timedelta(minutes=14, seconds=20), 0.95, "SUV")
+        add_detection("DL01CZ4567", "CAM-02", base_time + timedelta(minutes=5, seconds=0), 0.94, "Car")
+        add_detection("DL01CZ4567", "CAM-05", base_time + timedelta(minutes=14, seconds=20), 0.95, "Car")
 
         # -- Vehicle C: KA05MH8899 -- CAM-01 -> CAM-07 (plausible)
         print("  -> Vehicle C (KA05MH8899): CAM-01 -> CAM-07")
@@ -195,8 +195,8 @@ def seed_multicam_database():
         # within 20 seconds -- these cameras are ~12 km apart
         # This is physically impossible and should be flagged
         print("  -> Implausible test (TN02AA4321): CAM-01 -> CAM-07 in 20 seconds")
-        add_detection("TN02AA4321", "CAM-01", base_time + timedelta(minutes=15, seconds=0), 0.95, "Auto")
-        add_detection("TN02AA4321", "CAM-07", base_time + timedelta(minutes=15, seconds=20), 0.93, "Auto")
+        add_detection("TN02AA4321", "CAM-01", base_time + timedelta(minutes=15, seconds=0), 0.95, "Other")
+        add_detection("TN02AA4321", "CAM-07", base_time + timedelta(minutes=15, seconds=20), 0.93, "Other")
 
         db.commit()
 
@@ -205,7 +205,7 @@ def seed_multicam_database():
         random.seed(42)
         bg_plates = [
             (f"TS{random.randint(1,15):02d}{chr(random.randint(65,90))}{chr(random.randint(65,90))}{random.randint(1000,9999)}",
-             random.choice(["Sedan", "SUV", "Motorcycle", "Auto", "Truck", "Bus"]))
+             random.choice(["Car", "Motorcycle", "Bus", "Truck", "Other"]))
             for _ in range(30)
         ]
 

@@ -6,6 +6,7 @@ from app.models.detection import Detection
 from app.models.camera import Camera
 from app.models.vehicle import Vehicle
 from app.schemas.trajectory import TrajectoryStep, TrajectoryResponse
+from app.services.analytics_engine import map_vehicle_type
 
 def calculate_haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     R = 6371.0  # Earth radius in kilometers
@@ -53,7 +54,8 @@ class TrajectoryEngine:
         # Check vehicle metadata
         vehicle_record = db.query(Vehicle).filter(Vehicle.plate_number == detections[0].plate_number).first()
         is_watchlist = bool(vehicle_record.is_watchlist) if vehicle_record else False
-        vehicle_type = vehicle_record.vehicle_type if vehicle_record else detections[0].vehicle_type
+        raw_v_type = vehicle_record.vehicle_type if vehicle_record else detections[0].vehicle_type
+        vehicle_type = map_vehicle_type(raw_v_type)
 
         # Fetch camera names map
         cameras = {c.camera_id: c for c in db.query(Camera).all()}
@@ -90,7 +92,7 @@ class TrajectoryEngine:
                 direction=det.direction,
                 timestamp=det.timestamp,
                 confidence=round(det.confidence, 3),
-                vehicle_type=det.vehicle_type,
+                vehicle_type=map_vehicle_type(det.vehicle_type),
                 time_diff_from_prev_seconds=time_diff_sec,
                 time_diff_formatted=time_diff_fmt,
                 distance_from_prev_km=dist_km,

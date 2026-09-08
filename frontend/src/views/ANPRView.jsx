@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Cpu, Play, Image, Video, RefreshCw, CheckCircle2, AlertCircle, Clock, Zap, ChevronDown, ChevronUp, Upload, X } from 'lucide-react';
 import DemoDataBadge from '../components/DemoDataBadge';
+import { fetchVehicleDetails } from '../services/api';
 
 const API_BASE = '/api';
 
@@ -49,14 +50,33 @@ function StatusBadge({ value, good = true }) {
 
 function DetectionRow({ det, idx }) {
   const [expanded, setExpanded] = useState(false);
+  const [vehicleDetails, setVehicleDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
   const conf = det.confidence ?? 0;
   const confColor = conf >= 0.85 ? 'text-emerald-400' : conf >= 0.60 ? 'text-amber-400' : 'text-red-400';
+
+  const toggleExpand = async () => {
+    const nextState = !expanded;
+    setExpanded(nextState);
+    if (nextState && !vehicleDetails) {
+      try {
+        setLoadingDetails(true);
+        const details = await fetchVehicleDetails(det.plate_number);
+        setVehicleDetails(details);
+      } catch (e) {
+        console.error("Failed to fetch vehicle details", e);
+      } finally {
+        setLoadingDetails(false);
+      }
+    }
+  };
 
   return (
     <div className="border border-slate-800 rounded-lg bg-slate-950 overflow-hidden">
       <div
         className="flex items-center justify-between px-4 py-2.5 cursor-pointer hover:bg-slate-900 transition"
-        onClick={() => setExpanded(!expanded)}
+        onClick={toggleExpand}
       >
         <div className="flex items-center gap-3">
           <span className="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center justify-center text-[11px] font-mono font-bold">
@@ -74,11 +94,36 @@ function DetectionRow({ det, idx }) {
         </div>
       </div>
       {expanded && (
-        <div className="px-4 py-3 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs text-slate-400 bg-slate-900/40">
-          <div>Location: <span className="text-slate-200">{det.location_name}</span></div>
-          <div>Direction: <span className="text-slate-200">{det.direction}</span></div>
-          <div>Coordinates: <span className="font-mono text-slate-200">{det.latitude?.toFixed(4)}, {det.longitude?.toFixed(4)}</span></div>
-          <div>Source: <span className="text-sky-400">{det.source ?? 'anpr'}</span></div>
+        <div className="px-4 py-3 border-t border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-400 bg-slate-900/40">
+          <div className="space-y-1.5">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Detection Context</h4>
+            <div>Location: <span className="text-slate-200">{det.location_name}</span></div>
+            <div>Direction: <span className="text-slate-200">{det.direction}</span></div>
+            <div>Coordinates: <span className="font-mono text-slate-200">{det.latitude?.toFixed(4)}, {det.longitude?.toFixed(4)}</span></div>
+            <div>Source: <span className="text-sky-400">{det.source ?? 'anpr'}</span></div>
+          </div>
+          
+          <div className="space-y-1.5 border-l border-slate-800 pl-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">RTO / Vahan Details</h4>
+            {loadingDetails ? (
+              <div className="text-slate-500 italic animate-pulse">Fetching registration records...</div>
+            ) : vehicleDetails ? (
+              <>
+                <div>Type & Color: <span className="text-slate-200">{vehicleDetails.vehicle_type} • {vehicleDetails.color}</span></div>
+                <div>Owner Name: <span className="text-slate-200">{vehicleDetails.owner_name}</span></div>
+                <div>Reg Date: <span className="text-slate-200">{vehicleDetails.registration_date}</span></div>
+                <div>Chassis No: <span className="font-mono text-slate-200">{vehicleDetails.chassis_number}</span></div>
+                <div>Engine No: <span className="font-mono text-slate-200">{vehicleDetails.engine_number}</span></div>
+                {vehicleDetails.is_watchlist && (
+                  <div className="mt-1 text-red-400 font-bold bg-red-500/10 inline-block px-2 py-0.5 rounded">
+                    ⚠️ WATCHLIST FLAG
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-slate-500 italic">No registration details available.</div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -8,7 +8,7 @@ class Detection(Base):
     id = Column(Integer, primary_key=True, index=True)
     camera_id = Column(String(50), ForeignKey("cameras.camera_id"), index=True, nullable=False)
     plate_number = Column(String(30), index=True, nullable=False)
-    vehicle_type = Column(String(50), default="Sedan")
+    vehicle_type = Column(String(50), default="Car")
     confidence = Column(Float, nullable=False, default=0.95)
     location_name = Column(String(150), nullable=False)
     direction = Column(String(50), nullable=False)

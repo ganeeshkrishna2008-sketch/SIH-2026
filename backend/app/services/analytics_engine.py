@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, distinct
 from collections import defaultdict
@@ -11,6 +11,30 @@ from app.schemas.analytics import (
     TimeIntervalVolume,
     VehicleTypeCount
 )
+
+# Centralized mapping for high-level dashboard vehicle categories
+VEHICLE_TYPE_MAP: Dict[str, str] = {
+    "car": "Car",
+    "sedan": "Car",
+    "suv": "Car",
+    "motorcycle": "Motorcycle",
+    "bike": "Motorcycle",
+    "bus": "Bus",
+    "truck": "Truck",
+    "auto": "Other",
+    "unknown": "Other",
+}
+
+def map_vehicle_type(v_type: Optional[str]) -> str:
+    """
+    Map raw or detected vehicle type string to high-level category:
+    Car, Motorcycle, Bus, Truck, Other
+    Handles whitespace and case-insensitivity safely.
+    """
+    if not v_type:
+        return "Other"
+    clean = str(v_type).strip().lower()
+    return VEHICLE_TYPE_MAP.get(clean, "Other")
 
 class AnalyticsEngine:
     @staticmethod
@@ -93,21 +117,35 @@ class AnalyticsEngine:
 
         volume_by_interval.sort(key=lambda x: x.start_time)
 
-        # Vehicle type distribution
+        # Vehicle type distribution (grouped into high-level categories: Car, Motorcycle, Bus, Truck, Other)
         type_counts = (
             db.query(Detection.vehicle_type, func.count(Detection.id))
             .group_by(Detection.vehicle_type)
             .all()
         )
-        vehicle_type_distribution: List[VehicleTypeCount] = []
+        grouped_counts: Dict[str, int] = defaultdict(int)
         for v_type, count in type_counts:
-            pct = round((count / total_detections * 100), 1) if total_detections > 0 else 0.0
-            vehicle_type_distribution.append(VehicleTypeCount(
-                vehicle_type=v_type,
-                count=count,
-                percentage=pct
-            ))
-        vehicle_type_distribution.sort(key=lambda x: x.count, reverse=True)
+            cat = map_vehicle_type(v_type)
+            grouped_counts[cat] += count
+
+        valid_total = sum(grouped_counts.values())
+        vehicle_type_distribution: List[VehicleTypeCount] = []
+        if valid_total > 0:
+            for cat, count in grouped_counts.items():
+                if count > 0:
+                    pct = round((count / valid_total * 100), 1)
+                    vehicle_type_distribution.append(VehicleTypeCount(
+                        vehicle_type=cat,
+                        count=count,
+                        percentage=pct
+                    ))
+            vehicle_type_distribution.sort(key=lambda x: x.count, reverse=True)
+
+            # Ensure sum of percentages equals exactly 100.0% when observations exist
+            if vehicle_type_distribution:
+                diff = round(100.0 - sum(item.percentage for item in vehicle_type_distribution), 1)
+                if diff != 0.0:
+                    vehicle_type_distribution[0].percentage = round(vehicle_type_distribution[0].percentage + diff, 1)
 
         return AnalyticsSummaryResponse(
             total_detections=total_detections,

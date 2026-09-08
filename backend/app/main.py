@@ -13,6 +13,7 @@ from app.routers import (
     alerts_router,
     anpr_router,
     associations_router,
+    vehicles_router,
 )
 
 # Initialize database schema tables
@@ -46,6 +47,7 @@ app.include_router(analytics_router, prefix=API_V1_PREFIX)
 app.include_router(alerts_router, prefix=API_V1_PREFIX)
 app.include_router(anpr_router, prefix=API_V1_PREFIX)
 app.include_router(associations_router, prefix=API_V1_PREFIX)
+app.include_router(vehicles_router, prefix=API_V1_PREFIX)
 
 @app.get("/")
 def root():

@@ -110,6 +110,10 @@ def process_video(
     start_time = time.time()
 
     while True:
+        if time.time() - start_time > 25.0:
+            print("[ANPR] Max processing time (25s) reached to prevent HTTP timeout. Stopping early.")
+            break
+
         ret, frame = cap.read()
         if not ret:
             break
@@ -141,7 +145,7 @@ def process_video(
                         "longitude": longitude,
                         "direction": direction,
                         "timestamp": frame_timestamp.isoformat(),
-                        "vehicle_type": "Unknown",  # Phase 3: will add vehicle classifier
+                        "vehicle_type": "Other",  # Phase 3: will add vehicle classifier
                         "frame_index": frame_index,
                         "is_demo": 0,  # 0 = REAL ANPR detection (not synthetic)
                         "source": "anpr_video",
@@ -225,7 +229,7 @@ def process_single_image(
                 "longitude": longitude,
                 "direction": direction,
                 "timestamp": datetime.utcnow().isoformat(),
-                "vehicle_type": "Unknown",
+                "vehicle_type": "Other",
                 "frame_index": 0,
                 "is_demo": 0,
                 "source": "anpr_image",

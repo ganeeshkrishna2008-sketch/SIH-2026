@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Car, Calendar, Navigation, ShieldAlert, CheckCircle2, ArrowRight, Link2, Clock, MapPin, Zap } from 'lucide-react';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { fetchUniquePlates, fetchTrajectory, searchVehicleTracks } from '../services/api';
+import { mapVehicleType } from '../utils/vehicleType';
 
 export default function VehicleSearchView({ initialPlate = '', onNavigateToTrajectory }) {
   const [plates, setPlates] = useState([]);
@@ -159,7 +160,7 @@ export default function VehicleSearchView({ initialPlate = '', onNavigateToTraje
                       {trackData.normalized_plate}
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-                      {trackData.vehicle_type}
+                      {mapVehicleType(trackData.vehicle_type)}
                     </span>
                     {trackData.is_multi_camera && (
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
@@ -297,7 +298,7 @@ export default function VehicleSearchView({ initialPlate = '', onNavigateToTraje
                       {trajectoryData.plate_number}
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-                      {trajectoryData.vehicle_type}
+                      {mapVehicleType(trajectoryData.vehicle_type)}
                     </span>
                     {trajectoryData.is_watchlist && (
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30 flex items-center gap-1">

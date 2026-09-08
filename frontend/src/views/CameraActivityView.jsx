@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Camera, Clock, Navigation, CheckCircle2, Search, ArrowRight } from "lucide-react";
 import DemoDataBadge from "../components/DemoDataBadge";
 import { fetchCameras, fetchCameraVehicles } from "../services/api";
+import { mapVehicleType } from "../utils/vehicleType";
 
 export default function CameraActivityView({ onNavigateToVehicleHistory }) {
   const [cameras, setCameras] = useState([]);
@@ -77,7 +78,7 @@ export default function CameraActivityView({ onNavigateToVehicleHistory }) {
         >
           {cameras.map(cam => (
             <option key={cam.camera_id} value={cam.camera_id}>
-              {cam.camera_id} — {cam.name || cam.location_name}
+              {cam.camera_id} ï¿½ {cam.name || cam.location_name}
             </option>
           ))}
         </select>
@@ -153,7 +154,7 @@ export default function CameraActivityView({ onNavigateToVehicleHistory }) {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-400">
-                        {v.vehicle_type}
+                        {mapVehicleType(v.vehicle_type)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart3, TrendingUp, Camera, PieChart as PieIcon, Activity, Flame, Clock } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -18,6 +18,7 @@ import {
 import DemoDataBadge from '../components/DemoDataBadge';
 import MetricCard from '../components/MetricCard';
 import { fetchAnalyticsSummary } from '../services/api';
+import { VEHICLE_TYPE_MAP, CATEGORY_COLORS, mapVehicleType } from '../utils/vehicleType';
 
 const COLORS = ['#0284c7', '#38bdf8', '#0ea5e9', '#f59e0b', '#10b981', '#a855f7', '#ec4899', '#64748b'];
 
@@ -39,6 +40,43 @@ export default function AnalyticsView() {
     }
     loadData();
   }, []);
+
+  const modalShareData = useMemo(() => {
+    const raw = analytics?.vehicle_type_distribution || [];
+    if (!raw.length) return [];
+
+    const grouped = {};
+    let total = 0;
+    for (const item of raw) {
+      const category = mapVehicleType(item.vehicle_type);
+      const count = Number(item.count) || 0;
+      grouped[category] = (grouped[category] || 0) + count;
+      total += count;
+    }
+
+    if (total === 0) return [];
+
+    // Filter to categories with observations and sort descending by count
+    const list = Object.entries(grouped)
+      .filter(([_, count]) => count > 0)
+      .map(([category, count]) => ({
+        vehicle_type: category,
+        count,
+        percentage: Number(((count / total) * 100).toFixed(1)),
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // Guarantee that percentages sum to exactly 100%
+    if (list.length > 0) {
+      const sumPct = list.reduce((acc, curr) => acc + curr.percentage, 0);
+      const diff = Number((100 - sumPct).toFixed(1));
+      if (diff !== 0) {
+        list[0].percentage = Number((list[0].percentage + diff).toFixed(1));
+      }
+    }
+
+    return list;
+  }, [analytics?.vehicle_type_distribution]);
 
   if (loading || !analytics) {
     return (
@@ -229,47 +267,66 @@ export default function AnalyticsView() {
         {/* Modal Share Distribution (4 cols) */}
         <div className="lg:col-span-4 bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-3 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
-              Vehicle Type Modal Share
-            </h3>
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+                Vehicle Type Modal Share
+              </h3>
+              <p className="text-[11px] text-slate-400">Grouped into high-level vehicle categories</p>
+            </div>
             <PieIcon className="w-4 h-4 text-purple-400" />
           </div>
 
-          <div className="h-44 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={analytics.vehicle_type_distribution}
-                  dataKey="count"
-                  nameKey="vehicle_type"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={38}
-                  outerRadius={65}
-                  paddingAngle={3}
-                >
-                  {analytics.vehicle_type_distribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.5rem', fontSize: '12px' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="space-y-1.5 pt-2 border-t border-slate-800 text-xs">
-            {analytics.vehicle_type_distribution.map((item, idx) => (
-              <div key={item.vehicle_type} className="flex items-center justify-between text-slate-300">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></span>
-                  <span>{item.vehicle_type}</span>
-                </div>
-                <span className="font-mono text-slate-400">{item.count} ({item.percentage}%)</span>
+          {modalShareData.length > 0 ? (
+            <>
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={modalShareData}
+                      dataKey="count"
+                      nameKey="vehicle_type"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={38}
+                      outerRadius={65}
+                      paddingAngle={3}
+                    >
+                      {modalShareData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${entry.vehicle_type}`}
+                          fill={CATEGORY_COLORS[entry.vehicle_type] || COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.5rem', fontSize: '12px' }}
+                      formatter={(value, name, props) => [`${value} (${props?.payload?.percentage ?? 0}%)`, props?.payload?.vehicle_type || name]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            ))}
-          </div>
+
+              <div className="space-y-1.5 pt-2 border-t border-slate-800 text-xs">
+                {modalShareData.map((item, idx) => (
+                  <div key={item.vehicle_type} className="flex items-center justify-between text-slate-300">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: CATEGORY_COLORS[item.vehicle_type] || COLORS[idx % COLORS.length] }}
+                      ></span>
+                      <span>{item.vehicle_type}</span>
+                    </div>
+                    <span className="font-mono text-slate-400">{item.count} ({item.percentage}%)</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-44 text-slate-500 text-xs space-y-2">
+              <PieIcon className="w-8 h-8 opacity-30" />
+              <span>No vehicle type data available</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

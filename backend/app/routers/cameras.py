@@ -7,6 +7,7 @@ from app.models.camera import Camera
 from app.models.detection import Detection
 from app.schemas.camera import CameraResponse, CameraVehiclesResponse, CameraVehicleObservation
 from app.services.association_engine import normalize_plate
+from app.services.analytics_engine import map_vehicle_type
 
 router = APIRouter(prefix="/cameras", tags=["Cameras"])
 
@@ -52,7 +53,7 @@ def get_camera_vehicles(
         observations.append(CameraVehicleObservation(
             plate_number=det.plate_number,
             normalized_plate=norm_plate,
-            vehicle_type=det.vehicle_type,
+            vehicle_type=map_vehicle_type(det.vehicle_type),
             timestamp=det.timestamp,
             confidence=det.confidence,
             direction=det.direction,

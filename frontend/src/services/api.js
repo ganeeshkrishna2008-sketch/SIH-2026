@@ -23,6 +23,15 @@ export const fetchUniquePlates = async () => {
   return res.json();
 };
 
+export const fetchVehicleDetails = async (plateNumber) => {
+  const res = await fetch(`${API_BASE}/vehicles/${encodeURIComponent(plateNumber)}`);
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    throw new Error('Failed to fetch vehicle details');
+  }
+  return res.json();
+};
+
 export const fetchTrajectory = async (plateNumber) => {
   const res = await fetch(`${API_BASE}/trajectories/${encodeURIComponent(plateNumber)}`);
   if (!res.ok) {
