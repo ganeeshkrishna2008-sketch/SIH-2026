@@ -80,10 +80,16 @@ export default function AnalyticsView() {
 
   if (loading || !analytics) {
     return (
-      <div className="flex items-center justify-center h-96 text-slate-400">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-sm font-medium">Computing Urban Flow Analytics...</span>
+      <div className="space-y-6 animate-pulse">
+        <div className="h-20 bg-slate-900/60 rounded-2xl border border-slate-800"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-32 bg-slate-900/60 rounded-xl border border-slate-800"></div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-80 bg-slate-900/60 rounded-xl border border-slate-800"></div>
+          <div className="h-80 bg-slate-900/60 rounded-xl border border-slate-800"></div>
         </div>
       </div>
     );
@@ -235,23 +241,23 @@ export default function AnalyticsView() {
                 {analytics.volume_by_interval.map((row) => {
                   const isPeak = row.time_interval === analytics.peak_time_interval.interval;
                   return (
-                    <tr key={row.time_interval} className={`hover:bg-slate-800/40 transition ${isPeak ? 'bg-amber-500/5' : ''}`}>
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-200">
+                    <tr key={row.time_interval} className={`hover:bg-slate-800/40 transition-colors duration-200 ${isPeak ? 'bg-amber-500/5' : ''}`}>
+                      <td className="py-2.5 px-3 font-mono font-bold text-slate-200 tabular-nums">
                         {row.time_interval}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-sky-400">
+                      <td className="py-2.5 px-3 font-mono font-bold text-sky-400 tabular-nums">
                         {row.vehicle_count} vehicles
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-slate-300">
+                      <td className="py-2.5 px-3 font-mono text-slate-300 tabular-nums">
                         ~{row.hourly_rate_estimate} veh/hr
                       </td>
                       <td className="py-2.5 px-3">
                         {isPeak ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 tracking-tight">
                             PEAK INTERVAL 🔥
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400 tracking-tight">
                             NORMAL
                           </span>
                         )}

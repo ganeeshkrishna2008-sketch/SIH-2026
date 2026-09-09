@@ -14,7 +14,7 @@ function AutoFitBounds({ points }) {
   return null;
 }
 
-export default function TrajectoryMap({ cameras = [], trajectorySteps = [], selectedPlate = null }) {
+const TrajectoryMap = React.memo(function TrajectoryMap({ cameras = [], trajectorySteps = [], selectedPlate = null }) {
   const center = [17.3850, 78.4867];
 
   // Create custom marker icons using L.divIcon
@@ -185,4 +185,6 @@ export default function TrajectoryMap({ cameras = [], trajectorySteps = [], sele
       </div>
     </div>
   );
-}
+});
+
+export default TrajectoryMap;

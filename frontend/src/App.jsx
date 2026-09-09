@@ -84,29 +84,37 @@ export default function App() {
 
         <main className="flex-1 overflow-y-auto p-6 bg-slate-900/30">
           <div className="max-w-7xl mx-auto">
-            {currentTab === 'dashboard' && (
+            {/* Keep-Alive Views */}
+            <div className={currentTab === 'dashboard' ? 'block' : 'hidden'}>
               <DashboardView onSelectPlate={handleSelectPlate} />
-            )}
-            {currentTab === 'anpr' && (
-              <ANPRView />
-            )}
-            {currentTab === 'search' && (
+            </div>
+            
+            <div className={currentTab === 'search' ? 'block' : 'hidden'}>
               <VehicleSearchView
                 initialPlate={selectedPlate}
                 onNavigateToTrajectory={handleSearchNavigateToTrajectory}
               />
-            )}
-            {currentTab === 'camera-activity' && (
+            </div>
+
+            <div className={currentTab === 'camera-activity' ? 'block' : 'hidden'}>
               <CameraActivityView
                 onNavigateToVehicleHistory={handleNavigateToSearch}
               />
-            )}
-            {currentTab === 'trajectory' && (
+            </div>
+
+            <div className={currentTab === 'trajectory' ? 'block' : 'hidden'}>
               <TrajectoryView selectedPlate={selectedPlate} />
-            )}
-            {currentTab === 'analytics' && (
+            </div>
+
+            <div className={currentTab === 'analytics' ? 'block' : 'hidden'}>
               <AnalyticsView />
+            </div>
+
+            {/* Unmounted Views (to prevent background video processing or save memory) */}
+            {currentTab === 'anpr' && (
+              <ANPRView />
             )}
+            
             {currentTab === 'alerts' && (
               <AlertsView onSelectPlate={handleSelectPlate} />
             )}

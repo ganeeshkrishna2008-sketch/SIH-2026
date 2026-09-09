@@ -40,11 +40,15 @@ export default function DashboardView({ onSelectPlate }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96 text-slate-400">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-sm font-medium">Loading Dashboard Data...</span>
+      <div className="space-y-6 animate-pulse">
+        <div className="h-24 bg-slate-900/60 rounded-2xl border border-slate-800"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-32 bg-slate-900/60 rounded-xl border border-slate-800"></div>
+          ))}
         </div>
+        <div className="h-48 bg-slate-900/60 rounded-xl border border-slate-800"></div>
+        <div className="h-96 bg-slate-900/60 rounded-xl border border-slate-800"></div>
       </div>
     );
   }

@@ -137,6 +137,7 @@ export default function ANPRView() {
   const [generating, setGenerating] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [testError, setTestError] = useState(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   const [noiseLevel, setNoiseLevel] = useState('low');
   const [inputSource, setInputSource] = useState('demo-video');
@@ -171,6 +172,7 @@ export default function ANPRView() {
       setGenerating(true);
       setTestResult(null);
       setTestError(null);
+      setShowDiagnostics(false);
       
       let result;
       if (inputSource === 'upload-video') {
@@ -417,33 +419,86 @@ export default function ANPRView() {
       {testResult && (
         <div className="space-y-4">
           {/* Summary Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {[
               { label: 'Frames Processed', value: testResult.total_frames_sampled, color: 'sky' },
               { label: 'Plates Detected', value: testResult.detections?.length ?? 0, color: 'emerald' },
               { label: 'Stored to DB', value: testResult.detections_stored, color: 'purple' },
-              { label: 'Rejected (Low Conf)', value: testResult.rejected_low_confidence, color: 'amber' },
+              { label: 'Rejected (Format)', value: testResult.rejected_invalid_format || 0, color: 'red' },
+              { label: 'Rejected (Low Conf)', value: testResult.rejected_low_confidence || 0, color: 'amber' },
             ].map(m => (
               <div key={m.label} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">{m.label}</div>
-                <div className={`text-2xl font-bold ${
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">{m.label}</div>
+                <div className={`text-3xl font-bold font-mono tracking-tight ${
                   m.color === 'sky' ? 'text-sky-400' :
                   m.color === 'emerald' ? 'text-emerald-400' :
-                  m.color === 'purple' ? 'text-purple-400' : 'text-amber-400'
+                  m.color === 'purple' ? 'text-purple-400' :
+                  m.color === 'red' ? 'text-red-400' : 'text-amber-400'
                 }`}>{m.value}</div>
               </div>
             ))}
           </div>
 
           {/* Pipeline Compliance Note */}
-          <div className="p-3.5 rounded-xl bg-sky-500/5 border border-sky-500/20 text-xs text-sky-300 flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
-            <span>
-              <strong>Implementation Plan Compliance:</strong> Only detections with OCR confidence ≥ {(minConf * 100).toFixed(0)}% were stored.
-              Low-confidence plate regions were detected but rejected and counted separately.
-              No plates were invented, guessed, or silently corrected.
-            </span>
+          <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-sm text-slate-300 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-sky-400 shrink-0" />
+              <span>
+                <strong>Balanced Validation Active:</strong> Strict Indian plate format verification prevents non-plate text (e.g. CAMERA, SAFEPRO) from entering the database, while genuine vehicle plates are accepted.
+              </span>
+            </div>
+            <button
+              onClick={() => setShowDiagnostics(!showDiagnostics)}
+              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors duration-200 shrink-0 border border-slate-700 whitespace-nowrap active:scale-95"
+            >
+              {showDiagnostics ? 'Hide Diagnostic Log' : 'Show Diagnostic Log'}
+            </button>
           </div>
+
+          {/* Diagnostic Logs Drawer */}
+          {showDiagnostics && (
+            <div className="bg-slate-950/50 border border-slate-800 rounded-xl overflow-hidden mt-6">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-900/50">
+                <h4 className="text-slate-300 uppercase tracking-wider font-semibold font-sans text-xs">
+                  Candidate Region Analysis ({testResult.debug_candidates?.length || 0} Candidates)
+                </h4>
+                <span className="text-slate-500 text-[10px] uppercase">Real-time candidate classifier log</span>
+              </div>
+              <div className="max-h-96 overflow-y-auto overflow-x-hidden divide-y divide-slate-800/40">
+                {testResult.debug_candidates?.length > 0 ? (
+                  testResult.debug_candidates.map((cand, i) => {
+                    const decision = cand.decision ?? 'REJECTED';
+                    const reason = cand.reason ?? '';
+                    const isAccepted = decision === 'ACCEPTED';
+                    const displayText = cand.raw_text || cand.plate_number;
+                    const statusLabel = `${decision}: ${reason.toUpperCase()}`;
+                    return (
+                      <div key={i} className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800/60 last:border-0 font-mono text-xs gap-4 hover:bg-slate-900/60 transition-colors duration-150">
+                        <div className="flex items-center gap-6 min-w-0">
+                          <span className="text-slate-500 shrink-0 tabular-nums">Frame {cand.frame_index ?? (i + 1)}</span>
+                          <span className={`font-bold truncate ${displayText ? 'text-slate-200' : 'text-slate-500 italic'}`}>
+                            {displayText ? `"${displayText}"` : '[No OCR Text]'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-6 shrink-0">
+                          <span className="text-slate-400 tabular-nums">Conf: {((cand.confidence ?? 0) * 100).toFixed(1)}%</span>
+                          <span className={`px-2.5 py-1 rounded text-[10px] font-bold tracking-wider uppercase whitespace-nowrap ${
+                            isAccepted
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-red-500/10 text-red-500 border border-red-500/30'
+                          }`}>
+                            {statusLabel}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-slate-500 text-xs text-center py-8 px-4">No candidates analyzed in this run.</div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Detection List */}
           {testResult.detections?.length > 0 && (

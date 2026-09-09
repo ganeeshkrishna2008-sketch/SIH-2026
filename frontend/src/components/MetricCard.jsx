@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function MetricCard({ title, value, subtitle, icon: Icon, color = 'sky', badge }) {
+const MetricCard = React.memo(function MetricCard({ title, value, subtitle, icon: Icon, color = 'sky', badge }) {
   const colorMap = {
     sky: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
     emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -10,7 +10,7 @@ export default function MetricCard({ title, value, subtitle, icon: Icon, color =
   };
 
   return (
-    <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-5 shadow-sm hover:border-slate-700 transition-all">
+    <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-5 shadow-sm hover:border-slate-700 transition-colors duration-200">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{title}</span>
         {Icon && (
@@ -20,14 +20,16 @@ export default function MetricCard({ title, value, subtitle, icon: Icon, color =
         )}
       </div>
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-2xl font-bold tracking-tight text-slate-100">{value}</span>
+        <span className="text-3xl font-bold tracking-tight tabular-nums text-slate-100">{value}</span>
         {badge && (
           <span className="text-xs font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
             {badge}
           </span>
         )}
       </div>
-      {subtitle && <p className="mt-1 text-xs text-slate-400">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-xs text-slate-400 tabular-nums">{subtitle}</p>}
     </div>
   );
-}
+});
+
+export default MetricCard;
