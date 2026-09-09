@@ -6,5 +6,5 @@ DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATA_DIR / 'sih_traffic.db'}")
-PROJECT_NAME = "SIH26127 Traffic AI & Trajectory Engine"
+PROJECT_NAME = "UrbanSight Traffic AI & Trajectory Engine"
 API_V1_PREFIX = "/api"

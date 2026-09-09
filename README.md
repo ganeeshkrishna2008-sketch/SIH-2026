@@ -1,11 +1,11 @@
-# SIH26127 — City-Wide AI Engine for Multi-Camera ANPR Trajectory Tracking and Urban Traffic Analytics
+# UrbanSight — City-Wide AI Engine for Multi-Camera ANPR Trajectory Tracking and Urban Traffic Analytics
 
 **Prototype Implementation: Phase 0 (Architecture & Foundation) & Phase 1 (Synthetic Trajectory & Analytics MVP)**
 
 ---
 
 ## 🌟 Overview
-This repository contains the working implementation of **SIH26127**, designed to demonstrate:
+This repository contains the working implementation of **UrbanSight**, designed to demonstrate:
 1. **Multi-Camera Vehicle Association & Trajectory Reconstruction**: Chronologically mapping vehicle observations across distributed camera nodes with transit time intervals, speeds, and an interactive Leaflet/OpenStreetMap route.
 2. **Macro Urban Traffic Analytics**: Aggregated temporal flow analysis (10-minute intervals), camera volume distribution, modal share breakdown, and peak congestion detection.
 3. **Vehicle Search & History**: Fast plate search and observation timeline reconstruction.

@@ -224,7 +224,7 @@ export default function AnalyticsView() {
             <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
               Traffic Interval Breakdown Table
             </h3>
-            <span className="text-xs text-slate-400">SIH26127 Flow Specification</span>
+            <span className="text-xs text-slate-400">UrbanSight Flow Specification</span>
           </div>
 
           <div className="overflow-x-auto">

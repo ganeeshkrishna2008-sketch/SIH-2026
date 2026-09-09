@@ -11,7 +11,7 @@ export default function Navbar({ themeMode, setThemeMode }) {
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="font-bold text-slate-100 text-base tracking-tight">SIH26127</h1>
+            <h1 className="font-bold text-slate-100 text-base tracking-tight">UrbanSight</h1>
             <span className="text-xs px-2 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800 font-mono">MVP Prototype</span>
           </div>
           <p className="text-xs text-slate-400">Multi-Camera ANPR Trajectory Tracking & Traffic Analytics</p>
