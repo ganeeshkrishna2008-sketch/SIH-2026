@@ -101,17 +101,23 @@ def process_video(
     # Base timestamp for this video session (can be overridden)
     base_timestamp = datetime.utcnow()
 
-    detections: List[Dict[str, Any]] = []
-    rejected_count = 0
+    detections_map: Dict[str, Dict[str, Any]] = {}
+    accepted_count = 0
+    rejected_low_conf = 0
+    rejected_invalid_fmt = 0
+    rejected_no_txt = 0
+    debug_candidates: List[Dict[str, Any]] = []
+
     frames_processed = 0
     frame_index = 0
     annotated_paths: List[str] = []
 
     start_time = time.time()
+    max_duration = 35.0  # Max seconds before stopping to prevent browser timeouts
 
     while True:
-        if time.time() - start_time > 25.0:
-            print("[ANPR] Max processing time (25s) reached to prevent HTTP timeout. Stopping early.")
+        if time.time() - start_time > max_duration:
+            print(f"[ANPR] Max processing time ({max_duration}s) reached to prevent HTTP timeout. Stopping early.")
             break
 
         ret, frame = cap.read()
@@ -122,20 +128,28 @@ def process_video(
             frames_processed += 1
             frame_timestamp = base_timestamp + timedelta(seconds=frame_index / fps)
 
-            # Detect plate regions in this frame
-            plate_regions = detect_all_plate_regions(frame, max_regions=3)
-
-            # Fallback: use lower half of frame if no regions found
-            if not plate_regions:
-                h_f, w_f = frame.shape[:2]
-                lower = frame[h_f // 2:, :]
-                plate_regions = [(lower, (0, h_f // 2, w_f, h_f // 2))]
+            # Detect candidate plate regions in this frame
+            plate_regions = detect_all_plate_regions(frame, max_regions=5)
 
             frame_detections = []
             for crop, bbox in plate_regions:
-                plate_text, confidence = run_ocr(crop, min_confidence=min_confidence)
+                plate_text, confidence, decision, reason, raw_text = run_ocr(
+                    crop, min_confidence=min_confidence, return_details=True
+                )
 
-                if plate_text and confidence >= min_confidence:
+                candidate_info = {
+                    "frame_index": frame_index,
+                    "bbox": bbox,
+                    "raw_text": raw_text,
+                    "plate_number": plate_text,
+                    "confidence": confidence,
+                    "decision": decision,
+                    "reason": reason,
+                }
+                debug_candidates.append(candidate_info)
+
+                if decision == "ACCEPTED" and plate_text:
+                    accepted_count += 1
                     detection = {
                         "camera_id": camera_id,
                         "plate_number": plate_text,
@@ -145,18 +159,26 @@ def process_video(
                         "longitude": longitude,
                         "direction": direction,
                         "timestamp": frame_timestamp.isoformat(),
-                        "vehicle_type": "Other",  # Phase 3: will add vehicle classifier
+                        "vehicle_type": "Other",
                         "frame_index": frame_index,
-                        "is_demo": 0,  # 0 = REAL ANPR detection (not synthetic)
+                        "is_demo": 0,  # Real ANPR detection
                         "source": "anpr_video",
                     }
                     frame_detections.append(detection)
-                    detections.append(detection)
-                    print(f"[ANPR] Frame {frame_index}: Detected '{plate_text}' (conf={confidence:.2f})")
-                elif plate_text is None and confidence > 0:
-                    # Plate region found but OCR confidence too low — log only
-                    rejected_count += 1
-                    print(f"[ANPR] Frame {frame_index}: Plate region found but low confidence ({confidence:.2f}) — skipped")
+
+                    # Temporal aggregation: keep highest confidence detection per plate
+                    if plate_text not in detections_map or confidence > detections_map[plate_text]["confidence"]:
+                        detections_map[plate_text] = detection
+
+                    print(f"[ANPR] Frame {frame_index}: ACCEPTED '{plate_text}' ({confidence*100:.1f}%)")
+                else:
+                    if "Low confidence" in reason:
+                        rejected_low_conf += 1
+                    elif "Invalid plate format" in reason:
+                        rejected_invalid_fmt += 1
+                    else:
+                        rejected_no_txt += 1
+                    print(f"[ANPR] Frame {frame_index}: REJECTED candidate bbox={bbox} reason={reason}")
 
             # Save annotated frame for visualization
             if save_annotated and plate_regions:
@@ -169,8 +191,10 @@ def process_video(
 
     cap.release()
     elapsed = round(time.time() - start_time, 2)
+    final_detections = list(detections_map.values())
 
-    print(f"[ANPR] Done. Frames processed: {frames_processed}, Detections: {len(detections)}, Rejected: {rejected_count}")
+    print(f"[ANPR] Done. Frames: {frames_processed}, Accepted: {len(final_detections)}, "
+          f"Rejected(LowConf): {rejected_low_conf}, Rejected(Format): {rejected_invalid_fmt}, NoText: {rejected_no_txt}")
 
     return {
         "status": "completed",
@@ -178,8 +202,11 @@ def process_video(
         "camera_id": camera_id,
         "total_frames_sampled": frames_processed,
         "total_frames": total_frames,
-        "detections": detections,
-        "rejected_low_confidence": rejected_count,
+        "detections": final_detections,
+        "rejected_low_confidence": rejected_low_conf,
+        "rejected_invalid_format": rejected_invalid_fmt,
+        "rejected_no_text": rejected_no_txt,
+        "debug_candidates": debug_candidates,
         "annotated_frames": annotated_paths,
         "output_dir": str(OUTPUT_DIR),
         "duration_seconds": elapsed,

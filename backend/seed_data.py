@@ -76,6 +76,9 @@ def seed_database():
             {"plate_number": "AP09BK7788", "vehicle_type": "Motorcycle", "color": "Red", "owner_name": "Kiran Rao", "registration_date": "30-Mar-2022", "chassis_number": "MD2MCXXXXXXXXX456", "engine_number": "J20DXXXXXXX789", "is_watchlist": 0, "notes": "Delivery courier"},
             {"plate_number": "UP32EF9900", "vehicle_type": "Car", "color": "Grey", "owner_name": "Anita Desai", "registration_date": "18-Feb-2017", "chassis_number": "MA3EKXXXXXXXXX321", "engine_number": "G12BXXXXXXX654", "is_watchlist": 1, "notes": "Authorized Watchlist Demo Subject 2"},
             {"plate_number": "TN02AA4321", "vehicle_type": "Other", "color": "Green-Yellow", "owner_name": "Suresh Babu", "registration_date": "05-Jul-2016", "chassis_number": "ME4OTXXXXXXXXX987", "engine_number": "K25EXXXXXXX321", "is_watchlist": 0, "notes": "Urban Para-transit"},
+            {"plate_number": "KA02MN1826", "vehicle_type": "Car", "color": "Dark Grey", "owner_name": "Anand Verma", "registration_date": "14-Jun-2019", "chassis_number": "YV4BRXXXXXXXXX554", "engine_number": "D420TXXXXXXXXX998", "is_watchlist": 0, "notes": "Registered at Bangalore West RTO (KA-02)"},
+            {"plate_number": "KA02MM9091", "vehicle_type": "Car", "color": "Blue", "owner_name": "Vikram Seth", "registration_date": "19-Nov-2020", "chassis_number": "WBA5BXXXXXXXXX332", "engine_number": "B48BXXXXXXXXX119", "is_watchlist": 0, "notes": "Registered at Bangalore West RTO (KA-02)"},
+            {"plate_number": "KA02MH7256", "vehicle_type": "Car", "color": "Blue", "owner_name": "Rohit Nair", "registration_date": "08-Mar-2018", "chassis_number": "MAKGMXXXXXXXXX441", "engine_number": "L15ZXXXXXXXXX772", "is_watchlist": 0, "notes": "Registered at Bangalore West RTO (KA-02)"},
         ]
 
         for v in vehicles_data:

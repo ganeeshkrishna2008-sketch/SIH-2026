@@ -14,6 +14,34 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [selectedPlate, setSelectedPlate] = useState('TS09AB1234');
   const [pendingAlertCount, setPendingAlertCount] = useState(0);
+  const [themeMode, setThemeMode] = useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('theme', themeMode);
+    
+    const applyTheme = () => {
+      const isDark = 
+        themeMode === 'dark' || 
+        (themeMode === 'device' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+
+    applyTheme();
+
+    if (themeMode === 'device') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = () => applyTheme();
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    }
+  }, [themeMode]);
 
   useEffect(() => {
     async function loadAlertStats() {
@@ -44,8 +72,8 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-      <Navbar />
+    <div className="flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans transition-colors duration-200">
+      <Navbar themeMode={themeMode} setThemeMode={setThemeMode} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar

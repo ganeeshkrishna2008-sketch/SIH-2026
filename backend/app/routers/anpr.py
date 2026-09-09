@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.detection import Detection
 from app.models.camera import Camera
+from app.models.vehicle import Vehicle
 from app.schemas.detection import DetectionResponse
 
 # Path to ai_cv module (project root)
@@ -62,10 +63,13 @@ class ANPRResult(BaseModel):
     total_frames_sampled: int
     detections_stored: int
     rejected_low_confidence: int
+    rejected_invalid_format: Optional[int] = 0
+    rejected_no_text: Optional[int] = 0
     detections: list
     annotated_frames: list
     duration_seconds: float
     message: Optional[str] = None
+    debug_candidates: Optional[list] = []
 
 
 # ─── Helper: store detections from ANPR result into DB ────────────────────────
@@ -76,6 +80,7 @@ def _store_detections_in_db(db: Session, anpr_result: dict, camera_id: str) -> i
 
     stored = 0
     for det_data in anpr_result.get("detections", []):
+        plate = det_data.get("plate_number", "UNKNOWN")
         # Parse timestamp
         ts_str = det_data.get("timestamp", "")
         try:
@@ -83,10 +88,23 @@ def _store_detections_in_db(db: Session, anpr_result: dict, camera_id: str) -> i
         except Exception:
             ts = datetime.utcnow()
 
+        # Check vehicle registry for known type
+        v = db.query(Vehicle).filter(Vehicle.plate_number == plate).first()
+        v_type = v.vehicle_type if v else det_data.get("vehicle_type", "Other")
+
+        # Avoid duplicate detection within 5s for the same plate and camera
+        existing = db.query(Detection).filter(
+            Detection.camera_id == det_data.get("camera_id", camera_id),
+            Detection.plate_number == plate,
+            Detection.is_demo == 0
+        ).order_by(Detection.timestamp.desc()).first()
+        if existing and abs((existing.timestamp - ts).total_seconds()) < 5:
+            continue
+
         detection = Detection(
             camera_id=det_data.get("camera_id", camera_id),
-            plate_number=det_data.get("plate_number", "UNKNOWN"),
-            vehicle_type=det_data.get("vehicle_type", "Other"),
+            plate_number=plate,
+            vehicle_type=v_type,
             confidence=det_data.get("confidence", 0.0),
             location_name=cam.location_name if cam else det_data.get("location_name", "ANPR Zone"),
             direction=cam.direction if cam else det_data.get("direction", "Unknown"),
@@ -302,6 +320,9 @@ def process_video_endpoint(req: ProcessVideoRequest, db: Session = Depends(get_d
         total_frames_sampled=result.get("total_frames_sampled", 0),
         detections_stored=stored,
         rejected_low_confidence=result.get("rejected_low_confidence", 0),
+        rejected_invalid_format=result.get("rejected_invalid_format", 0),
+        rejected_no_text=result.get("rejected_no_text", 0),
+        debug_candidates=result.get("debug_candidates", []),
         detections=result.get("detections", []),
         annotated_frames=result.get("annotated_frames", []),
         duration_seconds=result.get("duration_seconds", 0),
@@ -372,6 +393,9 @@ async def upload_video_endpoint(
             total_frames_sampled=result.get("total_frames_sampled", 0),
             detections_stored=stored,
             rejected_low_confidence=result.get("rejected_low_confidence", 0),
+            rejected_invalid_format=result.get("rejected_invalid_format", 0),
+            rejected_no_text=result.get("rejected_no_text", 0),
+            debug_candidates=result.get("debug_candidates", []),
             detections=result.get("detections", []),
             annotated_frames=annotated,
             duration_seconds=result.get("duration_seconds", 0),
